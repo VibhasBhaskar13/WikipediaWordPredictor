@@ -7,13 +7,17 @@ import re
 from gensim.models import KeyedVectors
 import sqlite3
 import random
+from wordfreq import top_n_list
 
 conn=sqlite3.connect('wikipedia_spider.sqlite')
 cur=conn.cursor()
 gensimModel = KeyedVectors.load_word2vec_format("GoogleNews-vectors-negative300.bin", binary=True) #I downloaded the GoogleNews-vectors dataset from Kaggle
 embeddingDim = gensimModel.vector_size
-vocabSize=len(gensimModel)
-wordToIdx = {word: idx for idx, word in enumerate(gensimModel.key_to_index)}
+commonWords = top_n_list('en', 100000)
+commonWordsSet = set(commonWords)
+filteredWords = [word for word in gensimModel.key_to_index if word in commonWordsSet]
+vocabSize=len(filteredWords)
+wordToIdx = {word: idx for idx, word in enumerate(filteredWords)}
 idxToWord = {idx: word for word, idx in wordToIdx.items()}
 print("Done with idx")
 print(torch.cuda.is_available())
@@ -28,7 +32,7 @@ def prep(word):
 
 def getWordVector(word):
     word=prep(word)
-    if word in gensimModel:
+    if word in wordToIdx:
         return gensimModel[word]
     else:
         return np.zeros(embeddingDim, dtype=np.float32)
@@ -105,24 +109,17 @@ for epoch in range(epochs):
     correct=0
     total=0
     for batchX,batchY in dataLoader:
-        print("Next Batch Started")
         batchX = batchX.to(device)
         batchY = batchY.to(device)
         optimizer.zero_grad()
         outputs=network(batchX)
-        for i in range(len(batchY)):
-            total+=1
-            predictedIndex = torch.argmax(outputs[i])
-            predictedWord = idxToWord.get(predictedIndex, "<UNK>")
-            index = batchY[i].item()  
-            correctWord = idxToWord[index]
-            if predictedWord==correctWord:
-                correct+=1
+        _, predicted = torch.max(outputs, 1)
+        correct += (predicted == batchY).sum().item()
+        total += batchY.size(0)
         loss = lossFunction(outputs, batchY)
         loss.backward()
         optimizer.step()
         totalLoss += loss.item()
-        print("Batch ended")
     scheduler.step()
     print(f"Epoch {epoch+1}/{epochs}, Loss: {totalLoss:.4f}, Accuracy: {100*(correct/total)}")
 torch.save(network, 'model_full.pth')  
