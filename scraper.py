@@ -58,14 +58,16 @@ def get_page(url):
     header_lines = headers.split(b'\r\n')
     status_line = header_lines[0].decode(errors='ignore')
     status_code = int(status_line.split()[1])
+
     if status_code == 301 or status_code == 302:
         print(f"[!] Redirected — skipping for now: {url}")
         return ""
     elif status_code != 200:
         print(f"[!] Non-200 response ({status_code}) — skipping: {url}")
-    return ""
+        return ""
 
     return body.decode(errors='ignore')
+
 
 def parse_and_store(url, html, conn):
     soup = BeautifulSoup(html, "html.parser")
