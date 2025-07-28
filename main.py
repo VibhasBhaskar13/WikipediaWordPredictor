@@ -71,7 +71,6 @@ def generateTrainingData(cleanedArticles, contextSize):
     inputTensor = torch.tensor(np.stack(inputList), dtype=torch.float32)
     targetTensor = torch.tensor(targetList, dtype=torch.long)
     return inputTensor, targetTensor
-
 class Model(nn.Module):
     def __init__(self, contextSize, embeddingDim, vocabSize):
         super(Model, self).__init__()
@@ -95,9 +94,13 @@ random.shuffle(cleanedArticles)
 X, Y = generateTrainingData(cleanedArticles[:articleAmount], contextSize)
 print("Done with dataset")
 epochs=int(input("Epochs: "))
+resume=input("Would you like to train the same model as last time (y/n)? ")
 dataset = TensorDataset(X, Y)
 dataLoader = DataLoader(dataset, batch_size=64, shuffle=True)
-network=Model(contextSize,embeddingDim,vocabSize)
+if resume=="y":
+    network = torch.load('model_full.pth')
+else:
+    network=Model(contextSize,embeddingDim,vocabSize)
 network.to(device)
 optimizer = torch.optim.Adam(network.parameters(), lr=0.001)
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
