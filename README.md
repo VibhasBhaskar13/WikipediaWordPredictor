@@ -1,32 +1,52 @@
-WikiWordPredictor is a project developed in python. First, there is a scraper (scraper.py) that uses sockets and spiders wikipedia (following guidelines like robot.txt). It stores its info in the sqlite database.
-Then, the python code uses that database to train a simple Neural Network using pytorch.
+# 🧠 WikiWordPredictor
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+**WikiWordPredictor** is a Python-based machine learning project that scrapes Wikipedia and uses the data to train a simple neural network to predict words using [PyTorch](https://pytorch.org/) and [Word2Vec embeddings](https://www.kaggle.com/datasets/leadbest/googlenewsvectorsnegative300/).
 
-Scraper (scraper.py):
+---
 
--Started with a starting point (a wikipedia page)
+## 📚 Project Overview
 
--Asks user for how many pages it should iterate through.
+This project has two major components:
 
--Goes thorugh page, stores all links and adds them to the queue which is saved in a pickle file after spidering ends so that user can pick up from ending point in next run.
+1. **Web Scraper (`scraper.py`)**  
+   Crawls Wikipedia using sockets and follows robots.txt rules to build a dataset.
 
--All the data from the pages is stored in the sqlite database
+2. **Neural Network Trainer (`main.py`)**  
+   Processes the data and trains a multi-layer neural network using Word2Vec vectors.
 
-----------------------------------------------------------------------------------------------------------
+---
 
-Neural Network (main.py):
+## 🕷️ Scraper (`scraper.py`)
 
--Uses pytorch
+- 🌐 Starts with a user-specified Wikipedia page.
+- 🔁 Asks the user for the number of articles to crawl.
+- 🔗 Follows internal links on each page and adds them to a crawl queue.
+- 💾 Stores visited content in a local **SQLite** database (`wikipedia_spider.sqlite`).
+- 📦 Saves the crawl queue using **pickle**, allowing you to resume crawling later.
 
--Takes in data from the sqlite database and formats it so that only that actual words of the article remain
+---
 
--The data is used in creating the samples and the labels
+## 🧠 Neural Network (`main.py`)
 
--It uses the GoogleNews word2Vec (which can be found on Kaggle at this link: https://www.kaggle.com/datasets/leadbest/googlenewsvectorsnegative300/
+- ⚙️ Built with **PyTorch**.
+- 🧹 Cleans the raw text to remove irrelevant content (e.g., headers, citations).
+- 📊 Uses **Word2Vec** embeddings from [GoogleNews-vectors-negative300](https://www.kaggle.com/datasets/leadbest/googlenewsvectorsnegative300/) for input.
+- 🔤 Reduces vocabulary from 3 million to the most common **100,000 words** for efficiency.
+- 🧮 Constructs training samples with context windows and labels.
+- 📉 Starts training with an initial learning rate of **1%** (0.01) using **Adam optimizer**.
+- 📉 Applies a **learning rate scheduler** to gradually reduce the learning rate over time.
 
--It then filters throught the 3,000,000 words given by that dataset so that only the most common 100,000 remain for effiency purposes
+---
 
--Then, after formatting, everything is sent to the neural network which trains (starting at a learning rate of 1%, which is a little high for Adam)
+## 🗃️ Requirements
 
--Learning rate goes down by using the scheduler
+- Python 3.8+
+- PyTorch
+- NumPy
+- Gensim
+- SQLite3
+
+Install dependencies:
+
+```bash
+pip install torch numpy gensim
