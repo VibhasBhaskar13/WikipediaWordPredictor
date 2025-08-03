@@ -8,7 +8,9 @@ from gensim.models import KeyedVectors
 import sqlite3
 import random
 from wordfreq import top_n_list
+import pickle
 
+picklePath="preprocessed_data.pkl"
 conn=sqlite3.connect('wikipedia_spider.sqlite')
 cur=conn.cursor()
 gensimModel = KeyedVectors.load_word2vec_format("GoogleNews-vectors-negative300.bin", binary=True) #I downloaded the GoogleNews-vectors dataset from Kaggle
@@ -46,14 +48,19 @@ def encodeSequence(wordList):
     return tensor
 
 def cleanArticles(rawArticles):
-    cleanedArticles=[]
+    cleanedArticles = []
     for text in rawArticles:
-        text=re.sub(r"\[\d+\]","",text)
-        text=re.sub(r'\b(edit|References|See also|External links)\b','',text,flags=re.IGNORECASE)
-        text="\n".join(line for line in text.splitlines() if len(line.strip())>2 and not re.fullmatch(r'[A-Z\s]{1,5}',line.strip()))
-        text=re.sub(r'[^a-zA-Z0-9.,;:()\'\"%\s\-–]', '', text)
-        text=re.sub(r'\s+'," ",text).strip()
-        cleanedArticles.append(text)
+        text = re.sub(r"\[\d+\]", "", text)
+        text = re.sub(r'\b(edit|References|See also|External links)\b', '', text, flags=re.IGNORECASE)
+        text = "\n".join(
+            line for line in text.splitlines()
+            if len(line.strip()) > 2 and not re.fullmatch(r'[A-Z\s]{1,5}', line.strip())
+        )
+        text = re.sub(r'[^a-zA-Z0-9.,;:()\'\"%\s\-–]', '', text)
+        text = re.sub(r'\s+', " ", text).strip()
+        first_sentence_match = re.split(r'(?<=[.!?]) +', text)
+        if first_sentence_match:
+            cleanedArticles.append(first_sentence_match[0])
     return cleanedArticles
 
 def generateTrainingData(cleanedArticles, contextSize):
@@ -90,6 +97,14 @@ cur.execute("SELECT content FROM pages")
 rawArticles = [row[0] for row in cur.fetchall()]
 cleanedArticles=cleanArticles(rawArticles)
 print("Done cleaning")
+with open(picklePath, 'wb') as f:
+        pickle.dump({
+            'filteredWords': filteredWords,
+            'wordToIdx': wordToIdx,
+            'idxToWord': idxToWord,
+            'cleanedArticles': cleanedArticles
+        }, f)
+print("Saved preprocessing to pickle.")
 random.shuffle(cleanedArticles)
 X, Y = generateTrainingData(cleanedArticles[:articleAmount], contextSize)
 print("Done with dataset")
