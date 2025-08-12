@@ -113,7 +113,8 @@ resume=input("Would you like to train the same model as last time (y/n)? ")
 dataset = TensorDataset(X, Y)
 dataLoader = DataLoader(dataset, batch_size=64, shuffle=True)
 if resume=="y":
-    network = torch.load('model_full.pth')
+    network = Model(contextSize, embeddingDim, vocabSize)
+    network.load_state_dict(torch.load("model_full.pth", map_location=device))
 else:
     network=Model(contextSize,embeddingDim,vocabSize)
 network.to(device)
@@ -140,4 +141,4 @@ for epoch in range(epochs):
         totalLoss += loss.item()
     scheduler.step()
     print(f"Epoch {epoch+1}/{epochs}, Loss: {totalLoss:.4f}, Accuracy: {100*(correct/total)}")
-torch.save(network, 'model_full.pth')  
+torch.save(network.state_dict(), "model_full.pth")
