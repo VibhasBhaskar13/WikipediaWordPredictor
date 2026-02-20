@@ -104,7 +104,6 @@ with open(picklePath, 'wb') as f:
             'idxToWord': idxToWord,
             'cleanedArticles': cleanedArticles
         }, f)
-print("Saved preprocessing to pickle.")
 random.shuffle(cleanedArticles)
 X, Y = generateTrainingData(cleanedArticles[:articleAmount], contextSize)
 print("Done with dataset")
@@ -140,5 +139,5 @@ for epoch in range(epochs):
         optimizer.step()
         totalLoss += loss.item()
     scheduler.step()
-    print(f"Epoch {epoch+1}/{epochs}, Loss: {totalLoss:.4f}, Accuracy: {100*(correct/total)}")
+    print(f"Epoch {epoch+1}/{epochs}, Loss: {totalLoss:.5f}, Accuracy: {100*(correct/total)}")
 torch.save(network.state_dict(), "model_full.pth")
